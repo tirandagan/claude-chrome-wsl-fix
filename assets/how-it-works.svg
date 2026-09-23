@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 430" width="1200" height="430" role="img" aria-label="Before: the extension launches the Claude binary with --no-chrome. After: a wrapper strips it and adds --chrome.">
+  <rect width="1200" height="430" fill="#0a0d16"/>
+  <text x="600" y="42" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" font-size="19" font-weight="600" fill="#f5f7fa">How the fix works</text>
+  <text x="600" y="68" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" font-size="14" fill="#6b7590">claudeCode.claudeProcessWrapper is the one supported interception point</text>
+
+  <!-- BEFORE -->
+  <text x="60" y="112" font-family="ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace" font-size="13" letter-spacing="2.5" fill="#6b7590">BEFORE</text>
+  <g font-family="ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace" font-size="14">
+    <rect x="60" y="126" width="215" height="58" rx="8" fill="#141a2e" stroke="#2a3350"/>
+    <text x="80" y="151" fill="#f5f7fa">VS Code extension</text>
+    <text x="80" y="171" fill="#6b7590" font-size="12">builds the arg list</text>
+
+    <path d="M283 155 h58" stroke="#2a3350" stroke-width="2"/>
+    <path d="M341 155 l-9 -5 v10 z" fill="#2a3350"/>
+
+    <rect x="349" y="126" width="255" height="58" rx="8" fill="#1b2136" stroke="#ef4444" stroke-opacity=".5"/>
+    <text x="369" y="151" fill="#ef4444" font-weight="700">--no-chrome</text>
+    <text x="369" y="171" fill="#6b7590" font-size="12">hardcoded &#183; no setting reads it</text>
+
+    <path d="M612 155 h58" stroke="#2a3350" stroke-width="2"/>
+    <path d="M670 155 l-9 -5 v10 z" fill="#2a3350"/>
+
+    <rect x="678" y="126" width="215" height="58" rx="8" fill="#141a2e" stroke="#2a3350"/>
+    <text x="698" y="151" fill="#f5f7fa">claude binary</text>
+    <text x="698" y="171" fill="#6b7590" font-size="12">integration disabled</text>
+
+    <rect x="921" y="126" width="219" height="58" rx="8" fill="#1a1013" stroke="#ef4444" stroke-opacity=".35"/>
+    <text x="938" y="160" fill="#ef4444" font-size="13.5">&#10007; Chrome never connects</text>
+  </g>
+
+  <line x1="60" y1="222" x2="1140" y2="222" stroke="#1e2438"/>
+
+  <!-- AFTER -->
+  <text x="60" y="264" font-family="ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace" font-size="13" letter-spacing="2.5" fill="#6b7590">AFTER</text>
+  <g font-family="ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace" font-size="14">
+    <rect x="60" y="278" width="215" height="58" rx="8" fill="#141a2e" stroke="#2a3350"/>
+    <text x="80" y="303" fill="#f5f7fa">VS Code extension</text>
+    <text x="80" y="323" fill="#6b7590" font-size="12">unchanged</text>
+
+    <path d="M283 307 h58" stroke="#2a3350" stroke-width="2"/>
+    <path d="M341 307 l-9 -5 v10 z" fill="#2a3350"/>
+
+    <rect x="349" y="278" width="255" height="58" rx="8" fill="#12251c" stroke="#3ddc84" stroke-opacity=".55"/>
+    <text x="369" y="300" fill="#3ddc84" font-weight="700">wrapper.sh</text>
+    <text x="369" y="322" fill="#6b7590" font-size="11">strips --no-chrome, adds --chrome</text>
+
+    <path d="M612 307 h58" stroke="#2a3350" stroke-width="2"/>
+    <path d="M670 307 l-9 -5 v10 z" fill="#2a3350"/>
+
+    <rect x="678" y="278" width="215" height="58" rx="8" fill="#141a2e" stroke="#2a3350"/>
+    <text x="698" y="303" fill="#f5f7fa">claude binary</text>
+    <text x="698" y="323" fill="#3ddc84" font-size="12">--chrome</text>
+
+    <rect x="921" y="278" width="219" height="58" rx="8" fill="#12251c" stroke="#3ddc84" stroke-opacity=".45"/>
+    <text x="938" y="312" fill="#3ddc84" font-size="13.5">&#10003; Chrome connects</text>
+  </g>
+
+  <rect x="60" y="364" width="1080" height="44" rx="8" fill="#141a2e" stroke="#2a3350"/>
+  <text x="80" y="391" font-family="ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace" font-size="14" fill="#8a94ad">spawn:  &#60;wrapper&#62; &#60;real claude binary&#62; &#60;extension args...&#62;</text>
+  <text x="700" y="391" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif" font-size="13" fill="#6b7590">&#8212; $1 is the binary; everything after is forwarded untouched</text>
+</svg>
