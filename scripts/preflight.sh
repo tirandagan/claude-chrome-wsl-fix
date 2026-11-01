@@ -121,7 +121,9 @@ if [ -x "$BIN_DIR/launch-windows-chrome.sh" ] && [ -x "$BIN_DIR/cdp" ]; then ok 
 else inf "route 2 helpers not installed yet"; T2+=("run scripts/install-windows-chrome.sh"); fi
 V="$(curl -s -m 2 "http://127.0.0.1:$PORT/json/version" 2>/dev/null || true)"
 if [ -z "$V" ]; then
-  if (exec 3<>"/dev/tcp/127.0.0.1/$PORT") 2>/dev/null; then
+  # Under mirrored networking a closed Windows port silently drops the connection
+  # instead of refusing it, so the probe needs a timeout or it hangs forever.
+  if timeout 2 bash -c 'exec 3<>"/dev/tcp/127.0.0.1/$1"' _ "$PORT" 2>/dev/null; then
     no "port $PORT is taken by something that is not Chrome DevTools"; B2+=("port $PORT busy; pick another with CDP_PORT=<port>")
   else
     inf "port $PORT is free (the automation Chrome is not running, which is fine)"
