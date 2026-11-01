@@ -20,9 +20,10 @@ extraArgs:{debug:null,"debug-to-stderr":null,"enable-auth-status":null,
            "no-chrome":null,"replay-user-messages":null}
 ```
 
-Confirmed present in **2.1.278** and still present in **2.1.280** — an update
-during a single working session did not change it, so treat it as intentional
-rather than a transient bug.
+Confirmed present in **2.1.278**, **2.1.280** and **2.1.314** (re-checked
+2026-10-31 with the commands under [Re-verifying after an update](#re-verifying-after-an-update)).
+It has survived months of updates, so treat it as intentional rather than a
+transient bug.
 
 Every `claudeCode.*` setting the extension contributes was enumerated from its
 `package.json` and none of them gates this block. The settings surface simply
@@ -98,8 +99,10 @@ native host and the CLI session rendezvous over local IPC, and a Windows process
 cannot see a WSL process's socket. So a Windows Chrome pairs with a Windows
 Claude Code, not with your WSL session.
 
-Practical consequence: install Chrome **inside WSL**. WSLg renders it on the
-Windows desktop, so it looks and behaves like any other window.
+Practical consequence: for Claude in Chrome, install Chrome **inside WSL**. WSLg
+renders it on the Windows desktop, so it looks and behaves like any other window.
+To work in the **Windows** Chrome instead, use route 2, the DevTools Protocol
+([windows-chrome-cdp.md](windows-chrome-cdp.md)), which does not involve the extension at all.
 
 Redirecting that `.bat` through `wsl.exe` is theoretically possible but is not
 recommended — the file is generated and marked "do not edit manually", a Windows

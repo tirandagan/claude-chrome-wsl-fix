@@ -7,50 +7,41 @@
 
 # claude-chrome-wsl-fix
 
-Re-enables **Claude in Chrome** for Claude Code running in the **VS Code
-extension under WSL on Windows**, where it is disabled at launch and no setting
-turns it back on.
+Browser control for **Claude Code on Windows + WSL**, two ways:
 
-## Install
+| | Route 1: Claude in Chrome | Route 2: your Windows Chrome |
+|---|---|---|
+| What Claude drives | A Chrome installed **inside WSL** (it shows on your Windows desktop through WSLg) | The Chrome installed on **Windows**, in a separate automation profile |
+| How | The official Claude in Chrome extension and its tools | The Chrome DevTools Protocol, through a small `cdp` command |
+| The problem it solves | The VS Code extension launches Claude with `--no-chrome`, and no setting turns it off | The extension can never see a Windows browser from WSL |
+| One-time cost | One VS Code window reload, sign in to the extension | Possibly one WSL restart (mirrored networking) |
 
-**Clone straight into your skills folder** (recommended — you get updates with `git pull`):
+Install either or both.
+
+## Install: one line to Claude
+
+Open Claude Code inside WSL and send:
+
+```
+Follow https://github.com/tirandagan/claude-chrome-wsl-fix/blob/main/SETUP.md to set up browser control on my computer.
+```
+
+Claude checks your environment first (read-only), asks which route you want,
+shows you every change before making it, installs, has you do the one reload or
+restart that ends the chat, and verifies in the next one. **[SETUP.md](SETUP.md)**
+is that script, readable by you too. It ends with a manual install if you'd
+rather type the commands yourself.
+
+Already cloned? From the repo:
 
 ```bash
-git clone https://github.com/tirandagan/claude-chrome-wsl-fix.git \
-  ~/.claude/skills/claude-chrome-wsl-fix
+scripts/preflight.sh            # read-only check of both routes
+scripts/install.sh              # Route 1   (--dry-run to preview, --uninstall to undo)
+scripts/install-windows-chrome.sh   # Route 2   (--dry-run, --set-mirrored, --uninstall)
+scripts/install-skills.sh       # make the skills visible to Claude Code
 ```
 
-**Or download the packaged skill** from
-[Releases](https://github.com/tirandagan/claude-chrome-wsl-fix/releases) and unzip
-it into `~/.claude/skills/`.
-
-Then, in a Claude Code session:
-
-```
-Use the claude-chrome-wsl-fix skill — Claude in Chrome isn't connecting.
-```
-
-Claude runs the diagnostic, explains what is wrong, and walks you through it.
-Prefer to drive yourself? See **[SETUP.md](SETUP.md)**, or run:
-
-```bash
-~/.claude/skills/claude-chrome-wsl-fix/scripts/diagnose.sh   # read-only
-~/.claude/skills/claude-chrome-wsl-fix/scripts/install.sh    # applies the fix
-```
-
-Then reload the VS Code window.
-
-## Who this is for
-
-You are on Windows. You run VS Code with the WSL remote extension. You use
-Claude Code through the VS Code extension rather than a terminal. You installed
-the Claude Chrome extension, signed in, and Claude still cannot see or drive a
-browser.
-
-If you launch Claude from a plain WSL terminal, you do not need this — just run
-`claude --chrome`.
-
-## Why reinstalling the extension never fixes it
+## Route 1: why reinstalling the extension never fixes it
 
 The failure is not in the browser. The VS Code extension hardcodes
 `--no-chrome` into the arguments it passes to the Claude CLI:
@@ -62,11 +53,9 @@ extraArgs:{debug:null,"debug-to-stderr":null,"enable-auth-status":null,
 
 No `claudeCode.*` setting reads it, so there is nothing to switch off. It has
 persisted across extension updates. Because it is a *launch* flag, a session
-that started with it cannot enable the integration afterwards — which is why
-restarting the browser, reinstalling the extension, and signing in again all
+that started with it cannot enable the integration afterwards. That's why
+restarting the browser, reinstalling the extension and signing in again all
 appear to change nothing.
-
-## How the fix works
 
 VS Code exposes one supported interception point,
 `claudeCode.claudeProcessWrapper`. When set, the extension launches your script
@@ -81,91 +70,107 @@ instead of the binary and hands the real binary over as the first argument:
 The wrapper drops `--no-chrome`, appends `--chrome`, and forwards everything
 else byte for byte. About ten lines of shell.
 
-## Install
+**The catch:** the flag is necessary but not sufficient. The Claude CLI is a
+Linux process inside WSL, and it looks for the extension in *Linux* browser
+profiles. A Chrome installed on Windows is invisible to it. So Route 1's browser
+is a Chrome **installed inside WSL**, with the extension installed and signed in
+there. If you launch Claude from a plain WSL terminal, you don't need the
+wrapper at all: `claude --chrome`.
+
+## Route 2: driving the Windows Chrome
+
+When you want Claude in the browser you actually use on Windows, the extension
+can't help. Its Windows native host launches a *Windows* `claude.exe`, which a
+WSL session never sees. Route 2 uses the DevTools Protocol instead:
+
+- `launch-windows-chrome.sh` starts Windows Chrome on a **dedicated profile**
+  with a debug port (9333). Chrome 136+ refuses debug ports on your default
+  profile by design, so your everyday profile is never touched.
+- WSL reaches that port through **mirrored networking** (`networkingMode=Mirrored`
+  in `%UserProfile%\.wslconfig`).
+- `cdp` is a dependency-free client (Node 22+): `new`, `goto`, `text`, `click`,
+  `type`, `key`, `wait`, `eval`, `shot`, `close`. Clicks go only to **visible**
+  elements and count as real user input.
 
 ```bash
-scripts/diagnose.sh     # read-only; shows what is actually wrong
-scripts/install.sh      # writes the wrapper, self-tests it, registers it
+launch-windows-chrome.sh
+T=$(cdp new https://example.com); cdp text --tab $T; cdp shot page.png --tab $T; cdp close $T
 ```
 
-Then **reload the VS Code window** (`Ctrl+Shift+P` → *Developer: Reload
-Window*). Sessions already running keep their old arguments — this is the step
-most people miss.
-
-Confirm with `scripts/diagnose.sh` again: section 3 should list a session
-launched **with `--chrome`**.
-
-Prefer to be walked through it conversationally? Paste [SETUP.md](SETUP.md) to
-Claude.
-
-## The catch worth knowing up front
-
-Setting the flag is **necessary but not sufficient**. The Claude CLI is a Linux
-process inside WSL, and it looks for the browser extension in *Linux* profile
-directories. **A Chrome installed on Windows is invisible to it.**
-
-So the browser that pairs must be a Chrome **installed inside WSL**. That is
-less awkward than it sounds — WSLg renders it on your Windows desktop like any
-normal window. Install Chrome in WSL, add the extension from
-<https://claude.ai/chrome>, and sign in there.
-
-If you specifically need Claude to drive your **Windows** Chrome, the extension
-cannot do it; see [references/cdp-fallback.md](references/cdp-fallback.md) for
-the DevTools Protocol route.
+The `windows-chrome` skill teaches Claude this routine, including the rules: its
+own tab only, never type credentials, leave port 9222 to whatever uses it.
+Details: [references/windows-chrome-cdp.md](references/windows-chrome-cdp.md).
 
 ## What gets changed
 
-Exactly two things:
+| Route | Path | Purpose |
+|---|---|---|
+| 1 | `~/.claude/bin/claude-chrome-wrapper.sh` | the launch shim |
+| 1 | `~/.vscode-server/data/Machine/settings.json` | one key, `claudeCode.claudeProcessWrapper` (backup `.bak`) |
+| 2 | `~/.claude/bin/launch-windows-chrome.sh`, `cdp`, `cdp.mjs` | launcher and client |
+| 2 | `~/.config/claude-chrome-wsl-fix/windows-chrome.env` | port, profile, chrome.exe path |
+| 2 | `%UserProfile%\.wslconfig` | only with `--set-mirrored`, backed up first |
+| both | `~/.claude/skills/claude-chrome-wsl-fix`, `~/.claude/skills/windows-chrome` | skill links into this repo |
+| both | `~/.config/claude-chrome-wsl-fix/state.env` | progress, so Claude can resume after a reload |
 
-| Path | Purpose |
-|---|---|
-| `~/.claude/bin/claude-chrome-wrapper.sh` | the shim |
-| `~/.vscode-server/data/Machine/settings.json` | one key, `claudeCode.claudeProcessWrapper` |
-
-The setting goes in **Remote [WSL] Machine settings**, deliberately not User
-settings — those sync across machines, and a Linux path landing on your Mac
-would break Claude Code there. The installer backs the file up to `.bak` before
-touching it and refuses to write if the file contains comments it cannot parse
-safely.
+Route 1's setting goes in **Remote [WSL] Machine settings**, deliberately not User
+settings. Those sync across machines, and a Linux path landing on your Mac would
+break Claude Code there. The installer refuses to rewrite a settings file with
+`//` comments and gives you the one line to paste instead.
 
 ## Risk, stated plainly
 
-Once registered, **every** VS Code Claude session launches through this script,
-including agents already running. If the script is deleted or the extension
-changes its argument shape, sessions fail to start. `install.sh` self-tests the
-wrapper against a stub binary before registering it, precisely so that failure
-surfaces now rather than after a reload.
+- **Route 1:** once registered, **every** VS Code Claude session launches through
+  the wrapper, including agents already running. If the script is deleted or the
+  extension changes its argument shape, sessions fail to start. `install.sh`
+  self-tests the wrapper against a stub binary before registering it, and
+  uninstall is one command. `CLAUDE_CHROME_WRAPPER=off` makes it pass arguments
+  through untouched.
+- **Route 2:** anything signed in to the automation profile can be driven by
+  **any** local process while Chrome is running with the port open. Sign in there
+  only to accounts you're willing to hand to automation, and
+  `launch-windows-chrome.sh --stop` when you're done.
 
 ## Uninstall
 
 ```bash
-scripts/install.sh --uninstall
+scripts/install.sh --uninstall                 # Route 1, then reload the window
+scripts/install-windows-chrome.sh --uninstall  # Route 2
+scripts/install-skills.sh --uninstall          # skill links
 ```
 
-Removes the setting (keeping a backup) and leaves the wrapper file inert on
-disk. Reload the window to return to stock behaviour.
+`.wslconfig` and the Windows automation profile are left alone on purpose.
 
 ## Layout
 
 ```
 claude-chrome-wsl-fix/
-├── SKILL.md                      instructions Claude follows
-├── README.md                     this file
-├── SETUP.md                      paste-to-Claude guided setup
+├── SETUP.md                       guided install, written for Claude to follow
+├── SKILL.md                       skill: claude-chrome-wsl-fix (setup, diagnosis, repair)
+├── skills/windows-chrome/SKILL.md skill: windows-chrome (day-to-day Route 2 use)
 ├── scripts/
-│   ├── diagnose.sh               read-only, 7 checks
-│   ├── install.sh                install / --uninstall
-│   └── claude-chrome-wrapper.sh  the shim itself
-└── references/
-    ├── root-cause.md             forensics + how to re-verify after updates
-    └── cdp-fallback.md           driving Windows Chrome instead
+│   ├── preflight.sh               read-only check of both routes
+│   ├── diagnose.sh                Route 1 in depth, 8 checks
+│   ├── install.sh                 Route 1 install / --dry-run / --uninstall
+│   ├── claude-chrome-wrapper.sh   the Route 1 shim
+│   ├── install-windows-chrome.sh  Route 2 install / --dry-run / --set-mirrored / --uninstall
+│   ├── windows-chrome/            launch-windows-chrome.sh, cdp, cdp.mjs (installed to ~/.claude/bin)
+│   ├── install-skills.sh          link the skills into ~/.claude/skills
+│   └── lib.sh                     shared helpers
+├── references/
+│   ├── root-cause.md              forensics + how to re-verify after updates
+│   ├── windows-chrome-cdp.md      Route 2 internals and security
+│   └── troubleshooting.md         symptom → fix, both routes
+├── tests/run.sh                   offline test suite (CI runs it)
+└── CHANGELOG.md
 ```
 
 ## Verified against
 
-Claude Code VS Code extension **2.1.278** and **2.1.280**, Chrome 153, WSL2 on
-Windows. `references/root-cause.md` has the commands to re-confirm on a newer
-build — worth running if the fix ever stops working.
+Claude Code VS Code extension **2.1.278**, **2.1.280** and **2.1.314**; Chrome 155
+on Windows and 156 in WSL; WSL2 (Debian) on Windows with mirrored networking.
+`references/root-cause.md` has the commands to re-confirm on a newer build.
+Worth running if the fix ever stops working.
 
 ---
 

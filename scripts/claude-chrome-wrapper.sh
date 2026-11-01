@@ -19,9 +19,13 @@
 #   twice, and appends a single --chrome. Everything else is forwarded byte for
 #   byte, which matters because the extension passes paths containing spaces.
 #
+# ESCAPE HATCH
+#   CLAUDE_CHROME_WRAPPER=off in the environment forwards the original
+#   arguments untouched, so you can compare behaviour without uninstalling.
+#
 # TO DISABLE
-#   Remove the claudeCode.claudeProcessWrapper setting and reload the window.
-#   Nothing else needs undoing; this script is inert when unreferenced.
+#   Remove the claudeCode.claudeProcessWrapper setting and reload the window
+#   (scripts/install.sh --uninstall). This script is inert when unreferenced.
 
 set -uo pipefail
 
@@ -37,6 +41,10 @@ if [ ! -x "$BIN" ]; then
   exit 126
 fi
 
+if [ "${CLAUDE_CHROME_WRAPPER:-on}" = "off" ]; then
+  exec "$BIN" "$@"
+fi
+
 args=()
 for a in "$@"; do
   case "$a" in
@@ -45,4 +53,5 @@ for a in "$@"; do
   esac
 done
 
-exec "$BIN" "${args[@]}" --chrome
+# "${args[@]+...}" keeps bash < 4.4 from tripping set -u on an empty array.
+exec "$BIN" ${args[@]+"${args[@]}"} --chrome

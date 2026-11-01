@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Runs cdp.mjs with a Node >= 22 (needed for the built-in WebSocket), even when
+# the default `node` on PATH is older. Looks at PATH, then nvm installs.
+set -uo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+for n in "${CDP_NODE:-}" "$(command -v node 2>/dev/null)" \
+         $(ls -d "$HOME"/.nvm/versions/node/v*/bin/node 2>/dev/null | sort -V -r) /usr/local/bin/node /usr/bin/node; do
+  [ -n "$n" ] && [ -x "$n" ] || continue
+  v="$("$n" -p 'process.versions.node.split(".")[0]' 2>/dev/null)" || continue
+  if [ "${v:-0}" -ge 22 ] 2>/dev/null; then exec "$n" "$HERE/cdp.mjs" "$@"; fi
+done
+echo "cdp: no Node >= 22 found. Install one (e.g. nvm install 22) or set CDP_NODE=/path/to/node" >&2
+exit 1
