@@ -19,7 +19,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$HERE/lib.sh"
 DEST="$BIN_DIR/claude-chrome-wrapper.sh"
 MS="${VSCODE_MACHINE_SETTINGS:-$HOME/.vscode-server/data/Machine/settings.json}"
-KEY="claudeCode.claudeProcessWrapper"
+SETTING="claudeCode.claudeProcessWrapper"
 
 MODE=install
 case "${1:-}" in
@@ -30,10 +30,10 @@ esac
 [ "$MODE" = uninstall ] || copyright_banner
 
 command -v python3 >/dev/null 2>&1 || { no "python3 is required to edit $MS safely"; \
-  echo "    add this line to Remote [WSL] settings by hand instead:  \"$KEY\": \"$DEST\""; exit 1; }
+  echo "    add this line to Remote [WSL] settings by hand instead:  \"$SETTING\": \"$DEST\""; exit 1; }
 
 merge_setting() { # $1 = value, or empty to remove the key. Prints OK | UNPARSEABLE | UNCHANGED
-python3 - "$MS" "$KEY" "${1:-}" <<'PY'
+python3 - "$MS" "$SETTING" "${1:-}" <<'PY'
 import json, os, sys, shutil, tempfile
 path, key, value = sys.argv[1], sys.argv[2], sys.argv[3]
 raw = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
@@ -58,11 +58,11 @@ PY
 }
 
 if [ "$MODE" = uninstall ]; then
-  echo "Removing $KEY ..."
+  echo "Removing $SETTING ..."
   case "$(merge_setting "")" in
     OK) ok "setting removed (backup at $MS.bak)";;
     UNCHANGED) inf "setting was not present";;
-    UNPARSEABLE) warn "$MS has comments; remove the \"$KEY\" line by hand";;
+    UNPARSEABLE) warn "$MS has comments; remove the \"$SETTING\" line by hand";;
     *) no "could not edit $MS"; exit 1;;
   esac
   inf "leaving $DEST in place (harmless; delete it if you like)"
@@ -75,10 +75,10 @@ if [ "$MODE" = dry ]; then
   echo "Dry run — nothing will change. install.sh would:"
   inf "write $DEST (from scripts/claude-chrome-wrapper.sh, mode 0755)$( [ -e "$DEST" ] && echo ', replacing the existing file')"
   inf "self-test it against a stub binary, and stop if --no-chrome survives"
-  if [ -f "$MS" ] && grep -q "\"$KEY\"" "$MS"; then
-    inf "update \"$KEY\" in $MS (currently: $(grep -o "\"$KEY\"[^,}]*" "$MS" | head -1 | cut -d: -f2- | tr -d ' '))"
+  if [ -f "$MS" ] && grep -q "\"$SETTING\"" "$MS"; then
+    inf "update \"$SETTING\" in $MS (currently: $(grep -o "\"$SETTING\"[^,}]*" "$MS" | head -1 | cut -d: -f2- | tr -d ' '))"
   else
-    inf "add \"$KEY\": \"$DEST\" to $MS (backup at $MS.bak)"
+    inf "add \"$SETTING\": \"$DEST\" to $MS (backup at $MS.bak)"
   fi
   inf "ask you to reload the VS Code window (running sessions keep their old arguments)"
   exit 0
@@ -110,12 +110,12 @@ esac
 # 3. the setting — Machine scope, never User scope. User settings sync across
 #    machines, and a Linux path would break Claude Code on a Mac or Windows host.
 case "$(merge_setting "$DEST")" in
-  OK) ok "$KEY set in $MS (backup at $MS.bak)";;
-  UNCHANGED) ok "$KEY already set in $MS";;
+  OK) ok "$SETTING set in $MS (backup at $MS.bak)";;
+  UNCHANGED) ok "$SETTING already set in $MS";;
   UNPARSEABLE)
     warn "$MS could not be parsed (it probably contains // comments)."
     echo "    Add this line by hand instead (Ctrl+Shift+P → Preferences: Open Remote Settings (JSON)):"
-    echo "      \"$KEY\": \"$DEST\""
+    echo "      \"$SETTING\": \"$DEST\""
     echo "    Then reload the VS Code window."
     state_set ROUTE1 needs-manual-setting
     exit 2

@@ -10,8 +10,10 @@ Clears policy holds the plugin directory's validator raised on 2.2.1.
   `show-welcome.sh` copies only the page and the film.
 - `install-skills.sh` recognises a copy of the plugin by its two skills instead of by
   reading the manifest, so no script points at the manifest (and through it, the icon).
-- SETUP.md and `tests/run.sh` no longer use wording the validator read as a password
-  (the phrase "pass … to the installer", a counter named `PASS`).
+- Names the validator read as credentials are gone: the phrase "pass … to the
+  installer" in SETUP.md, the test suite's `PASS` counter and `pass` helper (now
+  `good`), and `install.sh`'s `KEY` variable, which holds the VS Code setting name
+  (now `SETTING`).
 
 ## 2.2.1 (2026-11-01)
 
