@@ -96,7 +96,9 @@ eq "uninstall leaves foreign folder alone" "$(cat "$H/.claude/skills/claude-chro
 HOME="$H" "$S/install-skills.sh" --replace >/dev/null; RC=$?
 eq "--replace links and backs up outside skills/" "$RC.$([ -L "$H/.claude/skills/claude-chrome-wsl-fix" ] && echo y).$(find "$H/.claude/skill-backups" -maxdepth 1 -name "claude-chrome-wsl-fix-*" | wc -l | tr -d " ")" "0.y.1"
 mini_copy() { mkdir -p "$1/scripts" "$1/skills/windows-chrome"; cp "$ROOT/SKILL.md" "$1/"; cp "$ROOT/skills/windows-chrome/SKILL.md" "$1/skills/windows-chrome/"; cp "$S/install-skills.sh" "$S/lib.sh" "$1/scripts/"; }
-H="$(newhome)"; P="$H/.claude/plugins/cache/tirandagan/wsl-browser-bridge/2.2.0"; mini_copy "$P"
+# A marketplace install lands in ~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/;
+# install-skills.sh only checks for the ~/.claude/plugins/ prefix, so these names are placeholders.
+H="$(newhome)"; P="$H/.claude/plugins/cache/example-marketplace/example-plugin/0.0.0"; mini_copy "$P"
 OUT="$(HOME="$H" "$P/scripts/install-skills.sh")"; RC=$?
 eq "marketplace install → links nothing" "$RC.$(ls -A "$H/.claude/skills" 2>/dev/null | wc -l | tr -d ' ')" "0.0"
 has "marketplace install → says why" "$OUT" "installed as a plugin"
