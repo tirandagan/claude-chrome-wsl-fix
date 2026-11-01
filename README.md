@@ -175,6 +175,10 @@ break Claude Code there. The installer refuses to rewrite a settings file with
 - **Runs:** the bash scripts in `scripts/`, and `cdp`, a dependency-free Node 22
   client. Nothing runs in the background and there are no hooks. Scripts run
   when you or Claude call them.
+- **Reads:** the Windows folder paths `%USERPROFILE%` and `%LOCALAPPDATA%`, to find
+  `.wslconfig`, `chrome.exe`, and where to keep the automation profile and the welcome
+  page. No tokens,
+  passwords, cookies or other credentials are read, from the environment or anywhere else.
 - **Connects to:** the Windows Chrome's DevTools port on `127.0.0.1` (9333 by
   default), from WSL, for Route 2. That traffic stays on your machine.
 - **Downloads:** the one-line install clones this repo from GitHub. If you choose

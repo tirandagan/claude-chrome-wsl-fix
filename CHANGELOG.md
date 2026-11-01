@@ -22,7 +22,7 @@ share the repo's name. The repo, URLs, skill names and config folders are unchan
   `skills/windows-chrome`.
 - `.claude-plugin/marketplace.json` (marketplace `tirandagan`), so it installs today with
   `/plugin install wsl-browser-bridge --marketplace tirandagan/claude-chrome-wsl-fix`.
-- `.claude-plugin/icon.png` (1024×1024 listing icon) and its source, `assets/icon-source.svg`.
+- A 1024×1024 listing icon in `.claude-plugin/`, with its SVG source in `assets/`.
 - README: the problem statement (Claude in Chrome doesn't work under WSL from VS Code,
   Cursor and other IDEs; a WSL-side Chrome is a second browser without your history,
   logins or extensions), plugin install, example prompts, and a "What it runs and
@@ -51,8 +51,8 @@ share the repo's name. The repo, URLs, skill names and config folders are unchan
   tab of whichever Chrome setup configured. SETUP.md opens it as its last step;
   `install-windows-chrome.sh` opens it after verifying (`--no-welcome` to skip).
 - The page opens with an 8.5-second animated film made with HyperFrames
-  (`assets/welcome.webm`, 159 KB, which Chrome always plays; `welcome-poster.jpg`
-  as the still for reduced-motion users), with a "Play again" button. The film's
+  (a 159 KB WebM, which Chrome always plays, plus a JPEG still for reduced-motion
+  users), with a "Play again" button. The film's
   source project is kept outside this repo so installs stay small.
 
 **Fixed**
