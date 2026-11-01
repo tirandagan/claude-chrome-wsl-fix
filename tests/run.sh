@@ -243,6 +243,17 @@ PY
 [ -z "$BROKEN" ] && pass "relative links resolve" || fail "relative links resolve" "$BROKEN"
 grep -rn 'cdp-fallback' "$ROOT" --include='*.md' --include='*.sh' --exclude-dir=tests --exclude-dir=.git --exclude=CHANGELOG.md >/dev/null && fail "no references to the old cdp-fallback.md" || pass "no references to the old cdp-fallback.md"
 
+echo "plugin directory rules"
+# The directory refuses to validate a repo whose .gitattributes rewrites file contents
+# (eol, text, filter, LFS, ...), so LF line endings are guarded here instead: the
+# scripts run in WSL, and a CRLF script fails with "bash\r: No such file or directory".
+BADATTR="$(find "$ROOT" -name .gitattributes -not -path '*/.git/*' -exec grep -HnE '(^|[[:space:]])-?(text|eol|crlf|filter|ident|working-tree-encoding|export-ignore|export-subst)([=[:space:]]|$)' {} + 2>/dev/null)"
+[ -z "$BADATTR" ] && pass "no .gitattributes rule the directory rejects" || fail "no .gitattributes rule the directory rejects" "$BADATTR"
+if git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+  CRLF="$(git -C "$ROOT" ls-files --eol | awk '$1 ~ /crlf/ {print $NF}')"
+  [ -z "$CRLF" ] && pass "every committed text file uses LF" || fail "every committed text file uses LF" "$CRLF"
+fi
+
 echo
 echo "passed $PASS, failed $FAIL"
 [ "$FAIL" = 0 ]

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.2.1 (2026-11-01)
+
+**Fixed**
+- The plugin directory's portal refused to validate the repo ("Couldn't validate that
+  repository"): it rejects `.gitattributes` rules that rewrite file contents, and ours
+  set `text eol=lf`. The file is gone. Every script is committed with LF, and WSL's Git
+  doesn't convert line endings, so clones inside WSL are unchanged.
+- `tests/run.sh` now guards that instead: it fails if a committed text file has CRLF
+  endings or a `.gitattributes` rule the directory rejects comes back.
+
 ## 2.2.0 (2026-11-01)
 
 The repo is now a Claude Code plugin, **wsl-browser-bridge**, ready for Anthropic's

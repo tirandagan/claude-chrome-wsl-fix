@@ -42,4 +42,4 @@ Start with `scripts/preflight.sh` (both routes) or `scripts/diagnose.sh`
 |---|---|
 | Skill not offered by Claude | `scripts/install-skills.sh`, then start a new chat |
 | `install-skills.sh` says a skill folder already exists | An older copy; `--replace` moves it to `~/.claude/skill-backups/` |
-| Scripts fail with `bash\r: No such file or directory` | The repo was cloned on the Windows side with CRLF endings. Clone inside WSL; `.gitattributes` keeps `*.sh` at LF |
+| Scripts fail with `bash\r: No such file or directory` | The repo was cloned on the Windows side, where Git turned the line endings into CRLF. Clone it again inside WSL (the repo stores LF, and WSL's Git leaves it alone), or install it as a plugin |
