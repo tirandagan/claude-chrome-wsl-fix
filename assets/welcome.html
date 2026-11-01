@@ -225,7 +225,8 @@
     // No motion: show the film's last frame as a still, with the option to play it.
     film.removeAttribute("autoplay");
     film.pause();
-    film.poster = "welcome-poster.jpg";
+    var toLastFrame = function () { film.currentTime = Math.max(0, film.duration - 0.05); };
+    if (film.readyState >= 1) toLastFrame(); else film.addEventListener("loadedmetadata", toLastFrame, { once: true });
     replay.textContent = "Play the animation";
     replay.hidden = false;
   }

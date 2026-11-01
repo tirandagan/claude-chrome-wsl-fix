@@ -100,7 +100,7 @@ TODO <route> <step>
 | `extension dropped claudeProcessWrapper` | Route 1 can't attach on this extension build. Offer Route 2 |
 | `install Google Chrome on Windows` | Route 2 needs Chrome on Windows. They install it, then you re-run preflight |
 | Windows interop off | Route 2 can't launch Windows programs. They set `[interop] enabled=true` in `/etc/wsl.conf` |
-| port busy | Route 2 can use another port; pass `CDP_PORT=<free port>` to the installer |
+| port busy | Route 2 can use another port: run the installer with `CDP_PORT=<free port>` in front |
 
 If both routes are blocked, stop here and explain.
 

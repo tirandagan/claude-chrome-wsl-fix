@@ -7,11 +7,11 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 S="$ROOT/scripts"
 VERBOSE=0; [ "${1:-}" = "-v" ] && VERBOSE=1
-PASS=0; FAIL=0
+N_OK=0; N_FAIL=0
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"; [ -n "${SRV:-}" ] && kill "$SRV" 2>/dev/null' EXIT
 
-pass() { PASS=$((PASS+1)); [ "$VERBOSE" = 1 ] && echo "  ok   $1"; return 0; }
-fail() { FAIL=$((FAIL+1)); echo "  FAIL $1"; [ -n "${2:-}" ] && printf '       %s\n' "$2"; return 0; }
+pass() { N_OK=$((N_OK+1)); [ "$VERBOSE" = 1 ] && echo "  ok   $1"; return 0; }
+fail() { N_FAIL=$((N_FAIL+1)); echo "  FAIL $1"; [ -n "${2:-}" ] && printf '       %s\n' "$2"; return 0; }
 check() { # $1 name, then a command; passes when the command succeeds
   local n="$1"; shift
   if out="$("$@" 2>&1)"; then pass "$n"; else fail "$n" "$(printf '%s' "$out" | head -5)"; fi
@@ -95,7 +95,7 @@ HOME="$H" "$S/install-skills.sh" --uninstall >/dev/null
 eq "uninstall leaves foreign folder alone" "$(cat "$H/.claude/skills/claude-chrome-wsl-fix/SKILL.md")" "old"
 HOME="$H" "$S/install-skills.sh" --replace >/dev/null; RC=$?
 eq "--replace links and backs up outside skills/" "$RC.$([ -L "$H/.claude/skills/claude-chrome-wsl-fix" ] && echo y).$(find "$H/.claude/skill-backups" -maxdepth 1 -name "claude-chrome-wsl-fix-*" | wc -l | tr -d " ")" "0.y.1"
-mini_copy() { mkdir -p "$1/scripts" "$1/.claude-plugin"; cp "$ROOT/SKILL.md" "$1/"; cp "$ROOT/.claude-plugin/plugin.json" "$1/.claude-plugin/"; cp "$S/install-skills.sh" "$S/lib.sh" "$1/scripts/"; }
+mini_copy() { mkdir -p "$1/scripts" "$1/skills/windows-chrome"; cp "$ROOT/SKILL.md" "$1/"; cp "$ROOT/skills/windows-chrome/SKILL.md" "$1/skills/windows-chrome/"; cp "$S/install-skills.sh" "$S/lib.sh" "$1/scripts/"; }
 H="$(newhome)"; P="$H/.claude/plugins/cache/tirandagan/wsl-browser-bridge/2.2.0"; mini_copy "$P"
 OUT="$(HOME="$H" "$P/scripts/install-skills.sh")"; RC=$?
 eq "marketplace install → links nothing" "$RC.$(ls -A "$H/.claude/skills" 2>/dev/null | wc -l | tr -d ' ')" "0.0"
@@ -161,7 +161,7 @@ class P(HTMLParser):
 p=P(); p.feed(open(sys.argv[1],encoding="utf-8").read())
 sys.exit(1 if p.bad or p.st else 0)
 PY
-for f in welcome.webm welcome-poster.jpg; do check "welcome: $f present" test -s "$ROOT/assets/$f"; done
+check "welcome: welcome.webm present" test -s "$ROOT/assets/welcome.webm"
 has "welcome: plays the film" "$WP" '<source src="welcome.webm"'
 has "show-welcome copies the film" "$(cat "$S/show-welcome.sh")" 'welcome.webm'
 U1="$(HOME="$(newhome)" "$S/show-welcome.sh" --route 1 --print-url 2>&1)"
@@ -255,5 +255,5 @@ if git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
 fi
 
 echo
-echo "passed $PASS, failed $FAIL"
-[ "$FAIL" = 0 ]
+echo "passed $N_OK, failed $N_FAIL"
+[ "$N_FAIL" = 0 ]

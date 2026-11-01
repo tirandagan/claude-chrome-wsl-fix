@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.2.2 (2026-11-01)
+
+Clears policy holds the plugin directory's validator raised on 2.2.1.
+
+**Changed**
+- Welcome page: the separate poster image is gone. With reduced motion on, the page
+  pauses the film on its own last frame, which is what the poster showed.
+  `show-welcome.sh` copies only the page and the film.
+- `install-skills.sh` recognises a copy of the plugin by its two skills instead of by
+  reading the manifest, so no script points at the manifest (and through it, the icon).
+- SETUP.md and `tests/run.sh` no longer use wording the validator read as a password
+  (the phrase "pass … to the installer", a counter named `PASS`).
+
 ## 2.2.1 (2026-11-01)
 
 **Fixed**

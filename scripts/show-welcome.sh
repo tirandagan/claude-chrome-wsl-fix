@@ -58,7 +58,7 @@ case "$ROUTE" in
     windows_chrome_up || { no "Windows Chrome is not answering on port $PORT — run launch-windows-chrome.sh first"; exit 1; }
     UDIR="$(wslpath -u "$WDIR")"
     ADIR="$(dirname "$PAGE")"
-    mkdir -p "$UDIR" && cp "$PAGE" "$ADIR"/welcome.webm "$ADIR"/welcome-poster.jpg "$UDIR/" \
+    mkdir -p "$UDIR" && cp "$PAGE" "$ADIR"/welcome.webm "$UDIR/" \
       || { no "could not copy the page and its film to $WDIR"; exit 1; }
     ENC="$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1],safe=""))' "$URL")"
     if curl -s -m 5 -X PUT "http://127.0.0.1:$PORT/json/new?$ENC" | grep -q '"id"'; then

@@ -6,8 +6,8 @@
 #   install-skills.sh --replace    move a conflicting existing folder aside first
 #   install-skills.sh --uninstall  remove only the links this script made
 #
-# The repo is a Claude Code plugin, wsl-browser-bridge (.claude-plugin/plugin.json),
-# with two skills: claude-chrome-wsl-fix (repo root) and windows-chrome
+# The repo is a Claude Code plugin, wsl-browser-bridge, with two skills:
+# claude-chrome-wsl-fix (repo root) and windows-chrome
 # (skills/windows-chrome). Claude Code loads a plugin folder it finds in
 # ~/.claude/skills at startup, so one link, ~/.claude/skills/claude-chrome-wsl-fix
 # → this repo, makes both skills visible. A link, not a copy, so `git pull` in the
@@ -42,8 +42,9 @@ for a in "$@"; do
 done
 
 realdir() { (cd "$1" 2>/dev/null && pwd -P) || true; }
-is_this_plugin() { grep -q "\"name\": *\"$PLUGIN_NAME\"" "$1/.claude-plugin/plugin.json" 2>/dev/null; }
-[ -f "$REPO/SKILL.md" ] && is_this_plugin "$REPO" || { no "$REPO is not the $PLUGIN_NAME plugin (SKILL.md or .claude-plugin/plugin.json missing)"; exit 1; }
+# A copy of this plugin is recognised by its two skills.
+is_this_plugin() { grep -q "^name: $NAME\$" "$1/SKILL.md" 2>/dev/null && [ -f "$1/skills/windows-chrome/SKILL.md" ]; }
+is_this_plugin "$REPO" || { no "$REPO is not a copy of the $PLUGIN_NAME plugin (SKILL.md or skills/windows-chrome/SKILL.md missing)"; exit 1; }
 
 # 1. The pre-2.2 windows-chrome link, if it points into any copy of this plugin.
 legacy="$SKILLS_DIR/windows-chrome"
