@@ -6,6 +6,7 @@
 #   install-windows-chrome.sh --set-mirrored  also add networkingMode=Mirrored to
 #                                             %UserProfile%\.wslconfig (backed up first)
 #   install-windows-chrome.sh --no-verify     skip starting Chrome at the end
+#   install-windows-chrome.sh --no-welcome    don't open the welcome page after verifying
 #   install-windows-chrome.sh --uninstall     remove helpers + config (leaves .wslconfig
 #                                             and the Chrome profile alone)
 #
@@ -23,11 +24,11 @@ SRC="$HERE/windows-chrome"
 CONF="$STATE_DIR/windows-chrome.env"
 FILES=(launch-windows-chrome.sh cdp cdp.mjs)
 
-DRY=0; MIRROR=0; VERIFY=1; UNINSTALL=0
+DRY=0; MIRROR=0; VERIFY=1; UNINSTALL=0; WELCOME=1
 for a in "$@"; do
   case "$a" in
-    --dry-run) DRY=1;; --set-mirrored) MIRROR=1;; --no-verify) VERIFY=0;; --uninstall) UNINSTALL=1;;
-    -h|--help) sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
+    --dry-run) DRY=1;; --set-mirrored) MIRROR=1;; --no-verify) VERIFY=0;; --no-welcome) WELCOME=0;; --uninstall) UNINSTALL=1;;
+    -h|--help) sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
     *) echo "unknown option: $a" >&2; exit 64;;
   esac
 done
@@ -43,6 +44,7 @@ if [ "$UNINSTALL" = 1 ]; then
   exit 0
 fi
 
+copyright_banner
 echo "Route 2 — Windows Chrome over CDP"; [ "$DRY" = 1 ] && echo "(dry run: nothing will change)"
 echo "=========================================="
 
@@ -137,6 +139,7 @@ if "$BIN_DIR/launch-windows-chrome.sh"; then
   if "$BIN_DIR/cdp" version >/dev/null 2>&1; then
     ok "cdp reaches the Windows Chrome:"; "$BIN_DIR/cdp" version | sed 's/^/      /'
     state_set PENDING none
+    [ "$WELCOME" = 1 ] && { "$HERE/show-welcome.sh" --route 2 || warn "welcome page did not open (setup itself is fine)"; }
   else
     no "launcher succeeded but cdp failed — is Node >= 22 installed?"; exit 1
   fi

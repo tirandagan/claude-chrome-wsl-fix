@@ -39,6 +39,7 @@ scripts/preflight.sh            # read-only check of both routes
 scripts/install.sh              # Route 1   (--dry-run to preview, --uninstall to undo)
 scripts/install-windows-chrome.sh   # Route 2   (--dry-run, --set-mirrored, --uninstall)
 scripts/install-skills.sh       # make the skills visible to Claude Code
+scripts/show-welcome.sh         # the "you're all set" page, in whichever Chrome is set up
 ```
 
 ## Route 1: why reinstalling the extension never fixes it
@@ -156,11 +157,13 @@ claude-chrome-wsl-fix/
 │   ├── install-windows-chrome.sh  Route 2 install / --dry-run / --set-mirrored / --uninstall
 │   ├── windows-chrome/            launch-windows-chrome.sh, cdp, cdp.mjs (installed to ~/.claude/bin)
 │   ├── install-skills.sh          link the skills into ~/.claude/skills
+│   ├── show-welcome.sh            open the welcome page when setup is done
 │   └── lib.sh                     shared helpers
 ├── references/
 │   ├── root-cause.md              forensics + how to re-verify after updates
 │   ├── windows-chrome-cdp.md      Route 2 internals and security
 │   └── troubleshooting.md         symptom → fix, both routes
+├── assets/welcome.html            the welcome page, plus welcome.webm and welcome-poster.jpg (its film)
 ├── tests/run.sh                   offline test suite (CI runs it)
 └── CHANGELOG.md
 ```

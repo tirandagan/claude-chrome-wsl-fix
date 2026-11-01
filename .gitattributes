@@ -7,3 +7,5 @@ scripts/windows-chrome/cdp text eol=lf
 *.yml text eol=lf
 *.md text
 *.svg text eol=lf
+*.webm binary
+*.jpg binary

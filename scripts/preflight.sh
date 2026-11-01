@@ -17,6 +17,7 @@ PORT="${CDP_PORT:-9333}"
 [ -f "$STATE_DIR/windows-chrome.env" ] && . "$STATE_DIR/windows-chrome.env" && PORT="${CDP_PORT:-$PORT}"
 B1=(); T1=(); B2=(); T2=()
 
+copyright_banner
 echo "claude-chrome-wsl-fix preflight (read-only)"
 echo "==========================================="
 

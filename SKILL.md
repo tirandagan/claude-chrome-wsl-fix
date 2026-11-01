@@ -79,6 +79,13 @@ Installers record progress in `~/.config/claude-chrome-wsl-fix/state.env`
 (`ROUTE1=`, `ROUTE2=`, `PENDING=reload|wsl-restart|none`). When asked to continue
 or verify the setup, read it, re-run `scripts/preflight.sh`, and finish whatever is pending.
 
+## Banner and welcome page
+
+`preflight.sh`, `install.sh` and `install-windows-chrome.sh` start with a boxed
+copyright notice. Show it to the user word for word, as SETUP.md step 1 says. When
+setup is done and verified, run `scripts/show-welcome.sh` to open the welcome page
+in a new tab of whichever Chrome is set up.
+
 ## Risk, said out loud
 
 - Route 1: once registered, **every** VS Code Claude session launches through the

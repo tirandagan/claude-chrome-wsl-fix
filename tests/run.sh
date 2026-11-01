@@ -108,6 +108,54 @@ if ! grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null; then
   has "off WSL both routes blocked" "$OUT" "route1=blocked route2=blocked"
 fi
 
+echo "copyright banner"
+has "preflight shows the copyright line 1" "$OUT" "This is the Claude Chrome for WSL skill,"
+has "preflight shows the copyright line 2" "$OUT" "written by Tiran Dagan, copyright 2026,"
+has "preflight shows the email" "$OUT" "tiran@tirandagan.com."
+OUT2="$(HOME="$(newhome)" "$S/install.sh" --dry-run 2>&1)"
+has "install.sh shows the banner" "$OUT2" "Claude Chrome for WSL"
+OUT3="$(CCWF_NO_BANNER=1 HOME="$(newhome)" "$S/preflight.sh" 2>&1)"
+case "$OUT3" in *"copyright 2026"*) fail "CCWF_NO_BANNER=1 hides it";; *) pass "CCWF_NO_BANNER=1 hides it";; esac
+N="$(bash -c ". '$S/lib.sh'; copyright_banner; copyright_banner" | grep -c 'copyright 2026')"
+eq "banner prints once per run" "$N" "1"
+W="$(bash -c ". '$S/lib.sh'; copyright_banner" | grep '│' | awk '{print length}' | sort -u | wc -l | tr -d ' ')"
+eq "banner box lines all the same width" "$W" "1"
+
+echo "welcome page"
+P="$ROOT/assets/welcome.html"
+check "welcome.html exists" test -f "$P"
+WP="$(cat "$P")"
+has "welcome: title" "$WP" "Welcome to Claude Chrome under WSL"
+has "welcome: credit" "$WP" "written by Tiran Dagan"
+has "welcome: site link" "$WP" 'href="https://tirandagan.com"'
+has "welcome: GitHub link" "$WP" 'href="https://github.com/tirandagan/claude-chrome-wsl-fix"'
+has "welcome: copyright" "$WP" "© 2026 Tiran Dagan"
+case "$WP" in *'src="http'*|*"@import"*|*'<link rel="stylesheet"'*) fail "welcome: no external resources";; *) pass "welcome: no external resources";; esac
+python3 - "$P" <<'PY' && pass "welcome: HTML tags balance" || fail "welcome: HTML tags balance"
+import sys
+from html.parser import HTMLParser
+VOID = {"meta","link","br","img","input","hr","source","circle","rect","ellipse","path","stop"}
+class P(HTMLParser):
+    def __init__(s): super().__init__(); s.st=[]; s.bad=0
+    def handle_starttag(s,t,a):
+        if t not in VOID: s.st.append(t)
+    def handle_startendtag(s,t,a): pass
+    def handle_endtag(s,t):
+        if t in VOID: return
+        if s.st and s.st[-1]==t: s.st.pop()
+        else: s.bad+=1
+p=P(); p.feed(open(sys.argv[1],encoding="utf-8").read())
+sys.exit(1 if p.bad or p.st else 0)
+PY
+for f in welcome.webm welcome-poster.jpg; do check "welcome: $f present" test -s "$ROOT/assets/$f"; done
+has "welcome: plays the film" "$WP" '<source src="welcome.webm"'
+has "show-welcome copies the film" "$(cat "$S/show-welcome.sh")" 'welcome.webm'
+U1="$(HOME="$(newhome)" "$S/show-welcome.sh" --route 1 --print-url 2>&1)"
+has "show-welcome route 1 URL" "$U1" "assets/welcome.html?route=1"
+case "$U1" in *" "*) fail "route 1 URL has no raw spaces" "$U1";; *) pass "route 1 URL has no raw spaces";; esac
+RC=0; HOME="$(newhome)" "$S/show-welcome.sh" --route 9 >/dev/null 2>&1 || RC=$?
+eq "show-welcome rejects a bad route" "$RC" "64"
+
 echo "cdp.mjs against a fake DevTools endpoint"
 if [ -n "$NODE" ]; then
   PORT=$((20000 + RANDOM % 20000))

@@ -64,7 +64,13 @@ user left off), say so, and go to step 6 for the route(s) already installed.
 "$REPO/scripts/preflight.sh"
 ```
 
-Read the whole output, then summarise it for the user in a few plain sentences.
+The output starts with a boxed copyright notice. Show it to the user word for
+word at the top of your reply, as a quote:
+
+> **Claude Chrome for WSL**
+> This is the Claude Chrome for WSL skill, written by Tiran Dagan, copyright 2026, tiran@tirandagan.com.
+
+Then read the rest of the output and summarise it for the user in a few plain sentences.
 The last lines are machine-readable:
 
 ```
@@ -125,7 +131,7 @@ Then tell them, in one short list:
   - **Route 2:** anything they sign in to in the automation profile can be used
     by any program on this computer while it's open, so sign in there only to
     accounts they're happy for automation to use.
-- how to undo it (step 7).
+- how to undo it (step 8).
 
 Ask for a yes. Wait.
 
@@ -148,7 +154,7 @@ cd /tmp && wget -q https://dl.google.com/linux/direct/google-chrome-stable_curre
 
 **4b. Route 2**
 ```bash
-"$REPO/scripts/install-windows-chrome.sh"                 # add --set-mirrored only if they agreed to the .wslconfig edit
+"$REPO/scripts/install-windows-chrome.sh" --no-welcome    # add --set-mirrored only if they agreed to the .wslconfig edit
 ```
 If networking was already mirrored, this also opens a Chrome window on their
 Windows desktop and checks it is the Windows browser. If it printed the
@@ -208,7 +214,19 @@ their desktop is the one Claude will use, and that it starts signed out.
 If anything fails, use [references/troubleshooting.md](references/troubleshooting.md)
 before improvising.
 
-### Step 7: Report
+### Step 7: Welcome page
+
+Once everything they chose is verified, open the welcome page. It's a short
+"you're all set" page with the project credits and a link to the GitHub repo:
+
+```bash
+"$REPO/scripts/show-welcome.sh"     # Windows Chrome if route 2 is running, else the Chrome inside WSL
+```
+
+It opens in a new tab and leaves the user's tabs alone. Tell them it's there. If it
+fails, say so; the setup itself is still fine.
+
+### Step 8: Report
 
 Finish with a short report:
 
@@ -260,6 +278,7 @@ scripts/install-skills.sh
 # 4. confirm
 scripts/diagnose.sh                      # Route 1: §3 shows a session WITH --chrome
 ~/.claude/bin/cdp version                # Route 2: user agent says Windows NT
+scripts/show-welcome.sh                  # the welcome page, in whichever Chrome is set up
 ```
 
 <details>

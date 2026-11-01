@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.1.0 (2026-11-01)
+
+**Added**
+- Copyright notice at the start of `preflight.sh`, `install.sh` and
+  `install-windows-chrome.sh` ("This is the Claude Chrome for WSL skill, written by
+  Tiran Dagan, copyright 2026, tiran@tirandagan.com."). SETUP.md has Claude show it
+  to the user. `CCWF_NO_BANNER=1` turns it off.
+- Welcome page (`assets/welcome.html`, self-contained, works offline) and
+  `scripts/show-welcome.sh` (`--route 1|2`, `--print-url`), which opens it in a new
+  tab of whichever Chrome setup configured. SETUP.md opens it as its last step;
+  `install-windows-chrome.sh` opens it after verifying (`--no-welcome` to skip).
+- The page opens with an 8.5-second animated film made with HyperFrames
+  (`assets/welcome.webm`, 159 KB, which Chrome always plays; `welcome-poster.jpg`
+  as the still for reduced-motion users), with a "Play again" button. The film's
+  source project is kept outside this repo so installs stay small.
+
+**Fixed**
+- `preflight.sh` hung forever when the automation Chrome was not running: under
+  mirrored networking a closed Windows port drops the connection instead of
+  refusing it. The port probe now times out after 2 seconds.
+
 ## 2.0.0 (2026-10-31)
 
 Two routes instead of one, and an install you hand to Claude.

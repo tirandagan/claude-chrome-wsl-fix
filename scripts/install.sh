@@ -27,6 +27,7 @@ case "${1:-}" in
   -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0;;
   *) echo "unknown option: $1" >&2; exit 64;;
 esac
+[ "$MODE" = uninstall ] || copyright_banner
 
 command -v python3 >/dev/null 2>&1 || { no "python3 is required to edit $MS safely"; \
   echo "    add this line to Remote [WSL] settings by hand instead:  \"$KEY\": \"$DEST\""; exit 1; }

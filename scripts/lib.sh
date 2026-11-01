@@ -2,9 +2,9 @@
 # shellcheck shell=bash
 
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
-  _G=$'\033[32m'; _R=$'\033[31m'; _Y=$'\033[33m'; _N=$'\033[0m'
+  _G=$'\033[32m'; _R=$'\033[31m'; _Y=$'\033[33m'; _B=$'\033[1m'; _N=$'\033[0m'
 else
-  _G=""; _R=""; _Y=""; _N=""
+  _G=""; _R=""; _Y=""; _B=""; _N=""
 fi
 ok()   { printf '  %s✓%s %s\n' "$_G" "$_N" "$1"; }
 no()   { printf '  %s✗%s %s\n' "$_R" "$_N" "$1"; }
@@ -17,6 +17,32 @@ STATE_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/claude-chrome-wsl-fix"
 BIN_DIR="$HOME/.claude/bin"
 # shellcheck disable=SC2034
 SKILLS_DIR="$HOME/.claude/skills"
+
+# Copyright banner, printed once per process tree by the entry-point scripts.
+# CCWF_NO_BANNER=1 turns it off (the tests and nested calls use this).
+copyright_banner() {
+  [ -n "${CCWF_NO_BANNER:-}" ] && return 0
+  export CCWF_NO_BANNER=1
+  local w=58 line
+  local -a body=(
+    "Claude Chrome for WSL"
+    ""
+    "This is the Claude Chrome for WSL skill,"
+    "written by Tiran Dagan, copyright 2026,"
+    "tiran@tirandagan.com."
+    ""
+    "github.com/tirandagan/claude-chrome-wsl-fix"
+  )
+  printf '\n  %s╭%s╮%s\n' "$_R" "$(printf '─%.0s' $(seq 1 $((w + 4))))" "$_N"
+  for line in "${body[@]}"; do
+    if [ "$line" = "Claude Chrome for WSL" ]; then
+      printf '  %s│%s  %s%-*s%s  %s│%s\n' "$_R" "$_N" "$_B" "$w" "$line" "$_N" "$_R" "$_N"
+    else
+      printf '  %s│%s  %-*s  %s│%s\n' "$_R" "$_N" "$w" "$line" "$_R" "$_N"
+    fi
+  done
+  printf '  %s╰%s╯%s\n\n' "$_R" "$(printf '─%.0s' $(seq 1 $((w + 4))))" "$_N"
+}
 
 is_wsl() { grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null; }
 

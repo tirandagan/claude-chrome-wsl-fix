@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome to Claude Chrome under WSL</title>
+<meta name="author" content="Tiran Dagan">
+<!--
+  Claude Chrome for WSL: welcome page shown when setup completes.
+  Written by Tiran Dagan, copyright 2026, tiran@tirandagan.com.
+  https://github.com/tirandagan/claude-chrome-wsl-fix
+  Self-contained on purpose: it opens from a file:// address, offline, with no
+  external fonts, scripts or images.
+-->
+<style>
+  :root {
+    --ink: #0a0d16;
+    --ink-2: #141a2e;
+    --line: #2a3350;
+    --muted: #9aa4bd;
+    --dim: #6b7590;
+    --paper: #f5f7fa;
+    --red: #ef4444;
+    --green: #3ddc84;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    font-family: var(--sans);
+    color: var(--paper);
+    background:
+      radial-gradient(900px 500px at 85% -10%, rgba(239, 68, 68, .16), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, rgba(61, 220, 132, .10), transparent 60%),
+      linear-gradient(160deg, var(--ink), var(--ink-2));
+    display: flex;
+    flex-direction: column;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(245, 247, 250, .035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245, 247, 250, .035) 1px, transparent 1px);
+    background-size: 64px 64px;
+    pointer-events: none;
+  }
+  .glow { position: fixed; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--red), transparent); }
+
+  main {
+    position: relative;
+    width: min(1080px, 100% - 48px);
+    margin: auto;
+    padding: 48px 0 40px;
+  }
+  .film {
+    margin: 0 0 40px;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--ink);
+    aspect-ratio: 16 / 9;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, .45), 0 0 0 6px rgba(20, 26, 46, .5);
+    position: relative;
+  }
+  .film video { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .replay {
+    position: absolute; right: 16px; bottom: 16px;
+    font: 600 13px/1 var(--sans); color: var(--paper);
+    background: rgba(10, 13, 22, .72); border: 1px solid var(--line);
+    border-radius: 999px; padding: 9px 14px; cursor: pointer;
+  }
+  .replay:hover { border-color: var(--muted); }
+  .replay:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  .below { display: grid; grid-template-columns: 1fr 1.1fr; gap: 48px; align-items: start; }
+  .lede { font-size: 19px; color: var(--muted); max-width: 30em; margin: 0 0 28px; }
+  .lede strong { color: var(--paper); font-weight: 600; }
+
+  .steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  .steps li {
+    display: grid; grid-template-columns: 36px 1fr; gap: 14px; align-items: start;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(20, 26, 46, .6);
+  }
+  .steps .n {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: grid; place-items: center;
+    font: 700 14px/1 var(--mono);
+    color: var(--ink); background: var(--paper);
+  }
+  .steps b { display: block; font-size: 16px; }
+  .steps span { color: var(--muted); font-size: 15px; }
+  .steps code {
+    font: 13px var(--mono); color: var(--paper);
+    background: rgba(245, 247, 250, .08); border-radius: 6px; padding: 2px 6px;
+  }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 13px 20px; border-radius: 12px;
+    font-weight: 650; font-size: 15px; text-decoration: none;
+    transition: transform .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .btn:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
+  .btn-primary { background: var(--paper); color: var(--ink); }
+  .btn-primary:hover { transform: translateY(-1px); background: #fff; }
+  .btn-ghost { color: var(--paper); border: 1px solid var(--line); }
+  .btn-ghost:hover { border-color: var(--muted); transform: translateY(-1px); }
+  .btn svg { width: 18px; height: 18px; }
+
+
+  footer {
+    position: relative;
+    width: min(1080px, 100% - 48px);
+    margin: 0 auto;
+    padding: 26px 0 34px;
+    border-top: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: space-between; align-items: center;
+    font-size: 14px; color: var(--dim);
+  }
+  .credit { display: flex; align-items: center; gap: 14px; }
+  .mark {
+    width: 40px; height: 40px; border-radius: 12px; flex: none;
+    display: grid; place-items: center;
+    font: 700 15px/1 var(--mono); color: var(--paper);
+    background: linear-gradient(135deg, var(--red), #b91c1c);
+  }
+  .credit p { margin: 0; line-height: 1.45; }
+  .credit strong { color: var(--paper); font-weight: 600; }
+  footer a { color: var(--paper); text-decoration: none; border-bottom: 1px solid var(--line); }
+  footer a:hover { border-color: var(--paper); }
+  .fine { max-width: 30em; text-align: right; font-size: 12.5px; }
+
+  @media (max-width: 860px) {
+    main { padding-top: 24px; }
+    .film { margin-bottom: 28px; border-radius: 14px; }
+    .below { grid-template-columns: 1fr; gap: 28px; }
+    .fine { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<main>
+  <figure class="film">
+    <!-- An 8.5 s HyperFrames film; it plays once and rests on its last frame. -->
+    <video id="film" autoplay muted playsinline preload="auto"
+           aria-label="Animation: a penguin pops up inside a browser window, waves, and plugs a green cable into it, next to the words Welcome to Claude Chrome under WSL, Setup complete, by Tiran Dagan">
+      <source src="welcome.webm" type="video/webm">
+    </video>
+    <button class="replay" id="replay" type="button" hidden>Play again</button>
+  </figure>
+  <h1 class="sr-only">Welcome to Claude Chrome under WSL</h1>
+
+  <div class="below">
+    <section>
+      <p class="lede" id="lede">
+        Claude Code runs inside WSL, and now it can open, read and click through web pages in
+        <strong id="which">this browser</strong>. This page is the proof: setup opened it here.
+      </p>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="https://github.com/tirandagan/claude-chrome-wsl-fix" target="_blank" rel="noopener">
+          <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+          View the project on GitHub
+        </a>
+        <a class="btn btn-ghost" href="https://tirandagan.com" target="_blank" rel="noopener">tirandagan.com</a>
+      </div>
+    </section>
+
+    <ol class="steps">
+      <li>
+        <div class="n">1</div>
+        <div><b>Just ask</b><span>Tell Claude “open the pricing page on example.com and tell me what it says.”</span></div>
+      </li>
+      <li>
+        <div class="n">2</div>
+        <div><b>It works in its own tab</b><span>Claude opens a tab of its own and closes it when done. Your tabs stay yours.</span></div>
+      </li>
+      <li>
+        <div class="n">3</div>
+        <div><b>You stay in charge of sign-ins</b><span>Claude never types your passwords. When a page needs a login, you sign in and Claude carries on.</span></div>
+      </li>
+    </ol>
+  </div>
+</main>
+
+<footer>
+  <div class="credit">
+    <div class="mark">TD</div>
+    <p>
+      <strong>Claude Chrome for WSL</strong>, written by Tiran Dagan
+      · <a href="https://tirandagan.com" target="_blank" rel="noopener">tirandagan.com</a><br>
+      © 2026 Tiran Dagan · <a href="mailto:tiran@tirandagan.com">tiran@tirandagan.com</a>
+      · <a href="https://github.com/tirandagan/claude-chrome-wsl-fix" target="_blank" rel="noopener">github.com/tirandagan/claude-chrome-wsl-fix</a>
+    </p>
+  </div>
+  <p class="fine">Free to use and share. Not affiliated with or endorsed by Anthropic or Google.
+    “Claude” is a trademark of Anthropic; “Chrome” is a trademark of Google.</p>
+</footer>
+
+<script>
+  // show-welcome.sh adds ?route=1 (Chrome inside WSL) or ?route=2 (your Windows Chrome).
+  var r = new URLSearchParams(location.search).get("route");
+  var which = document.getElementById("which");
+  if (r === "2") which.textContent = "your Windows Chrome";
+  else if (r === "1") which.textContent = "the Chrome inside WSL";
+
+  var film = document.getElementById("film");
+  var replay = document.getElementById("replay");
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // No motion: show the film's last frame as a still, with the option to play it.
+    film.removeAttribute("autoplay");
+    film.pause();
+    film.poster = "welcome-poster.jpg";
+    replay.textContent = "Play the animation";
+    replay.hidden = false;
+  }
+  film.addEventListener("ended", function () { replay.textContent = "Play again"; replay.hidden = false; });
+  replay.addEventListener("click", function () { replay.hidden = true; film.currentTime = 0; film.play(); });
+</script>
+</body>
+</html>
