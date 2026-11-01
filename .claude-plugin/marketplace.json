@@ -1,0 +1,15 @@
+{
+  "name": "tirandagan",
+  "description": "Claude Code plugins by Tiran Dagan.",
+  "owner": {
+    "name": "Tiran Dagan",
+    "email": "tiran@tirandagan.com"
+  },
+  "plugins": [
+    {
+      "name": "wsl-browser-bridge",
+      "source": "./",
+      "description": "Browser control for Claude Code in WSL: drive your Windows Chrome from WSL, or re-enable Claude in Chrome under VS Code + WSL."
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "wsl-browser-bridge",
+  "displayName": "WSL Browser Bridge",
+  "version": "2.2.0",
+  "description": "Claude Code running in WSL under VS Code, Cursor or another IDE can't use Claude in Chrome out of the box. Installing Chrome inside WSL gives you a second, Linux browser, separate from your Windows one, where you have to set up your logins and extensions again. This plugin lets Claude drive the Chrome on your Windows desktop from WSL (in its own profile you sign in to once), and can also re-enable Claude in Chrome under VS Code + WSL.",
+  "author": {
+    "name": "Tiran Dagan",
+    "email": "tiran@tirandagan.com",
+    "url": "https://bepreparedsolutions.co"
+  },
+  "homepage": "https://github.com/tirandagan/claude-chrome-wsl-fix",
+  "repository": "https://github.com/tirandagan/claude-chrome-wsl-fix",
+  "documentationUrl": "https://github.com/tirandagan/claude-chrome-wsl-fix#readme",
+  "supportUrl": "https://github.com/tirandagan/claude-chrome-wsl-fix/issues",
+  "license": "MIT",
+  "keywords": ["wsl", "windows", "browser", "chrome", "devtools-protocol", "vscode", "cursor", "browser-automation"],
+  "icon": "./.claude-plugin/icon.png",
+  "skills": ["./"]
+}

@@ -11,6 +11,10 @@ or paste this whole file into the chat. Claude checks your machine first, asks
 which browser you want it to drive, shows you every change before making it, and
 tells you how to undo it. Expect a few minutes and one window reload.
 
+Prefer a plugin? `/plugin install wsl-browser-bridge --marketplace tirandagan/claude-chrome-wsl-fix`,
+then in a new chat say "Set up browser control on my computer". Claude follows
+these same steps from the installed copy.
+
 Prefer to do it yourself? Skip to [Manual install](#manual-install).
 
 ---
@@ -39,7 +43,14 @@ plain words, say what each step is for, and keep them informed between steps.
 
 ### Step 0: Get the repo
 
-The skill only loads from `~/.claude/skills/`, so that's where the repo goes.
+**Already installed as a plugin?** If you're reading this from inside the
+`wsl-browser-bridge` plugin (the user installed it with `/plugin install` or from
+Anthropic's directory, and this file sits under `~/.claude/plugins/`), set `REPO`
+to the folder this file is in and skip the clone below. Don't also clone into
+`~/.claude/skills`: a second copy loads the skills twice.
+
+Otherwise, clone into `~/.claude/skills/`. The repo is a plugin, and Claude Code
+loads plugin folders found there at startup.
 
 ```bash
 REPO=~/.claude/skills/claude-chrome-wsl-fix
@@ -110,7 +121,7 @@ if you have it.
 
 Recommend based on the preflight. If one route is `ready` or nearly so, say so.
 If they said the browser "opened in WSL" and they wanted Windows, recommend
-Route 2. Both can be installed. Also install the skills (step 4c) in every case.
+Route 2. Both can be installed. Also run step 4c in every case.
 
 ### Step 3: Show the plan
 
@@ -166,8 +177,12 @@ is, so explain that and ask again, or stop there.
 ```bash
 "$REPO/scripts/install-skills.sh"
 ```
-Exit 2 means a skill folder of that name already exists. Ask before re-running
-with `--replace`, which moves it to `~/.claude/skill-backups/`.
+It makes the plugin visible and removes the pre-2.2 `~/.claude/skills/windows-chrome`
+link, which would otherwise load that skill twice. For a plugin install or a clone
+already in `~/.claude/skills` it links nothing and says so. Exit 2 means a folder
+named `claude-chrome-wsl-fix` that isn't this repo already exists in
+`~/.claude/skills`. Ask before re-running with `--replace`, which moves it to
+`~/.claude/skill-backups/`.
 
 ### Step 5: Hand the restart steps to the user
 
@@ -230,19 +245,22 @@ fails, say so; the setup itself is still fine.
 
 Finish with a short report:
 
-- **Installed:** route(s), skills.
+- **Installed:** route(s), and the `wsl-browser-bridge` plugin with its two skills.
 - **Changed:** the exact files from the installer output.
 - **Checked:** what you verified in step 6, with the actual result. If anything is
   still unverified, say so.
 - **How to use it:** Route 1, "ask me to open a page in Chrome". Route 2, the same;
   the `windows-chrome` skill takes it from there.
-- **How to undo:**
+- **How to undo:** the simplest is to say "undo the browser setup" in a chat. By
+  hand, with `REPO` written out as the real path:
   ```bash
-  ~/.claude/skills/claude-chrome-wsl-fix/scripts/install.sh --uninstall                # Route 1, then reload
-  ~/.claude/skills/claude-chrome-wsl-fix/scripts/install-windows-chrome.sh --uninstall # Route 2
-  ~/.claude/skills/claude-chrome-wsl-fix/scripts/install-skills.sh --uninstall         # skill links
+  "$REPO/scripts/install.sh" --uninstall                # Route 1, then reload
+  "$REPO/scripts/install-windows-chrome.sh" --uninstall # Route 2
+  "$REPO/scripts/install-skills.sh" --uninstall         # the ~/.claude/skills link, if one was made
   ```
   Route 2's uninstall leaves `.wslconfig` and the automation profile alone; say so.
+  For a plugin install, run these before `/plugin uninstall`, because the scripts
+  are inside the plugin.
 
 ---
 
@@ -272,7 +290,8 @@ scripts/install-windows-chrome.sh --dry-run && scripts/install-windows-chrome.sh
 #     scripts/install-windows-chrome.sh --set-mirrored, then `wsl --shutdown` in
 #     Windows PowerShell, reopen VS Code, and run scripts/install-windows-chrome.sh again.
 
-# 3. skills
+# 3. skills: a clone in ~/.claude/skills already loads as the plugin; this only
+#    removes the pre-2.2 windows-chrome link (or links a clone kept elsewhere)
 scripts/install-skills.sh
 
 # 4. confirm

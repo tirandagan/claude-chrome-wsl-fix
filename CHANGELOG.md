@@ -1,5 +1,34 @@
 # Changelog
 
+## 2.2.0 (2026-11-01)
+
+The repo is now a Claude Code plugin, **wsl-browser-bridge**, ready for Anthropic's
+plugin directory. (Plugin names may not start with `claude-`, so the plugin can't
+share the repo's name. The repo, URLs, skill names and config folders are unchanged.)
+
+**Added**
+- `.claude-plugin/plugin.json`: name, display name "WSL Browser Bridge", directory
+  listing fields, and `"skills": ["./"]` so the root skill loads alongside
+  `skills/windows-chrome`.
+- `.claude-plugin/marketplace.json` (marketplace `tirandagan`), so it installs today with
+  `/plugin install wsl-browser-bridge --marketplace tirandagan/claude-chrome-wsl-fix`.
+- `.claude-plugin/icon.png` (1024×1024 listing icon) and its source, `assets/icon-source.svg`.
+- README: the problem statement (Claude in Chrome doesn't work under WSL from VS Code,
+  Cursor and other IDEs; a WSL-side Chrome is a second browser without your history,
+  logins or extensions), plugin install, example prompts, and a "What it runs and
+  connects to" disclosure.
+- Tests for the plugin manifest and for each `install-skills.sh` install shape.
+
+**Changed**
+- `install-skills.sh`: links one folder, the plugin, instead of two skills. It links
+  nothing when the repo is already in `~/.claude/skills` or was installed from a
+  marketplace, and removes the pre-2.2 `~/.claude/skills/windows-chrome` link, which
+  would otherwise load that skill twice.
+- SETUP.md and SKILL.md handle running from an installed plugin, and say to run the
+  uninstall scripts before removing the plugin.
+- README: the BePrepared section is shortened to a credit; the built-by graphic stays.
+  Banner relabelled.
+
 ## 2.1.0 (2026-11-01)
 
 **Added**

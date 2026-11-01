@@ -1,24 +1,55 @@
-![claude-chrome-wsl-fix](assets/banner.svg)
+![wsl-browser-bridge](assets/banner.svg)
 
 <p align="center">
-  <em>A Claude Code skill by <a href="https://bepreparedsolutions.co">Tiran Dagan</a> —
+  <em>A Claude Code plugin by <a href="https://bepreparedsolutions.co">Tiran Dagan</a> —
   because the fix took a day to find and should take you two minutes.</em>
 </p>
 
-# claude-chrome-wsl-fix
+# WSL Browser Bridge
 
-Browser control for **Claude Code on Windows + WSL**, two ways:
+**The problem.** If you run Claude Code inside WSL from an IDE such as VS Code
+or Cursor, Claude in Chrome doesn't work out of the box. Install Chrome inside
+WSL and Claude may open that one, but it's a second, Linux browser: it looks
+and behaves differently from the Chrome on your Windows machine, and it has none
+of your browsing history, logins or extensions, so you set all of that up again
+just so Claude can use a browser.
+
+**The fix.** This plugin lets Claude use a browser from WSL, two ways:
 
 | | Route 1: Claude in Chrome | Route 2: your Windows Chrome |
 |---|---|---|
-| What Claude drives | A Chrome installed **inside WSL** (it shows on your Windows desktop through WSLg) | The Chrome installed on **Windows**, in a separate automation profile |
+| What Claude drives | A Chrome installed **inside WSL** (it shows on your Windows desktop through WSLg) | The Chrome installed on **Windows**, in its own profile |
 | How | The official Claude in Chrome extension and its tools | The Chrome DevTools Protocol, through a small `cdp` command |
 | The problem it solves | The VS Code extension launches Claude with `--no-chrome`, and no setting turns it off | The extension can never see a Windows browser from WSL |
+| Works from | VS Code (the installer edits VS Code's settings), or `claude --chrome` in a terminal | Any WSL session: VS Code, Cursor, another IDE, a terminal |
 | One-time cost | One VS Code window reload, sign in to the extension | Possibly one WSL restart (mirrored networking) |
 
-Install either or both.
+**Route 2 keeps you in Windows.** Claude opens pages in the Chrome installed on
+Windows, on your Windows desktop, so you go from your Windows browsing to your
+WSL coding without a second browser. Chrome doesn't let automation attach to
+your everyday profile (since Chrome 136), so Claude gets its own profile in your
+Windows Chrome. Sign in to the sites you want it to use once, add the extensions
+you need, and they stay there for every later session.
 
-## Install: one line to Claude
+Install either route or both.
+
+## Install as a plugin
+
+In Claude Code, inside WSL:
+
+```
+/plugin install wsl-browser-bridge --marketplace tirandagan/claude-chrome-wsl-fix
+```
+
+That needs Claude Code 2.1.275 or later. On older versions, run
+`/plugin marketplace add tirandagan/claude-chrome-wsl-fix`, then
+`/plugin install wsl-browser-bridge@tirandagan`.
+
+Then start a new chat and say **"Set up browser control on my computer"**, or run
+`/wsl-browser-bridge:claude-chrome-wsl-fix`. Claude takes it from there, the same
+way as the one-line install below.
+
+## Or install with one line to Claude
 
 Open Claude Code inside WSL and send:
 
@@ -38,9 +69,25 @@ Already cloned? From the repo:
 scripts/preflight.sh            # read-only check of both routes
 scripts/install.sh              # Route 1   (--dry-run to preview, --uninstall to undo)
 scripts/install-windows-chrome.sh   # Route 2   (--dry-run, --set-mirrored, --uninstall)
-scripts/install-skills.sh       # make the skills visible to Claude Code
+scripts/install-skills.sh       # make the plugin visible to Claude Code (links it into ~/.claude/skills)
 scripts/show-welcome.sh         # the "you're all set" page, in whichever Chrome is set up
 ```
+
+The repo is the plugin. A clone in `~/.claude/skills/` loads as the
+`wsl-browser-bridge` plugin with both skills, with no marketplace involved.
+
+## What to ask Claude
+
+After setup, in any Claude Code chat inside WSL:
+
+- "Open https://staging.example.com in Chrome and tell me whether the sign-up form submits."
+- "Go to our pricing page, take a screenshot, and check the plan names match the ones in `pricing.ts`."
+- "Read the release notes at https://example.com/changelog and list anything that breaks our build."
+- "Claude in Chrome isn't connecting in VS Code. Find out why."
+- "Undo the browser setup."
+
+The first three use whichever route you installed. The last two are handled by
+the setup skill.
 
 ## Route 1: why reinstalling the extension never fixes it
 
@@ -111,13 +158,30 @@ Details: [references/windows-chrome-cdp.md](references/windows-chrome-cdp.md).
 | 2 | `~/.claude/bin/launch-windows-chrome.sh`, `cdp`, `cdp.mjs` | launcher and client |
 | 2 | `~/.config/claude-chrome-wsl-fix/windows-chrome.env` | port, profile, chrome.exe path |
 | 2 | `%UserProfile%\.wslconfig` | only with `--set-mirrored`, backed up first |
-| both | `~/.claude/skills/claude-chrome-wsl-fix`, `~/.claude/skills/windows-chrome` | skill links into this repo |
+| both | `~/.claude/skills/claude-chrome-wsl-fix` | link to this repo, only for a clone kept outside `~/.claude/skills` (`install-skills.sh`) |
 | both | `~/.config/claude-chrome-wsl-fix/state.env` | progress, so Claude can resume after a reload |
+
+Nothing is written until you (or Claude, after showing you the dry run and
+getting your yes) run an installer. Installing the plugin by itself only adds
+the two skills.
 
 Route 1's setting goes in **Remote [WSL] Machine settings**, deliberately not User
 settings. Those sync across machines, and a Linux path landing on your Mac would
 break Claude Code there. The installer refuses to rewrite a settings file with
 `//` comments and gives you the one line to paste instead.
+
+## What it runs and connects to
+
+- **Runs:** the bash scripts in `scripts/`, and `cdp`, a dependency-free Node 22
+  client. Nothing runs in the background and there are no hooks. Scripts run
+  when you or Claude call them.
+- **Connects to:** the Windows Chrome's DevTools port on `127.0.0.1` (9333 by
+  default), from WSL, for Route 2. That traffic stays on your machine.
+- **Downloads:** the one-line install clones this repo from GitHub. If you choose
+  Route 1 and have no Chrome in WSL, SETUP.md gives you a command to run
+  yourself that downloads Chrome from `dl.google.com`.
+- **Sends:** nothing. No telemetry, no analytics, no calls to the author or any
+  third party. The welcome page is a local file and works offline.
 
 ## Risk, stated plainly
 
@@ -137,15 +201,21 @@ break Claude Code there. The installer refuses to rewrite a settings file with
 ```bash
 scripts/install.sh --uninstall                 # Route 1, then reload the window
 scripts/install-windows-chrome.sh --uninstall  # Route 2
-scripts/install-skills.sh --uninstall          # skill links
+scripts/install-skills.sh --uninstall          # the ~/.claude/skills link, if it made one
 ```
+
+Installed as a plugin? Ask Claude to "undo the browser setup" **before** you
+remove the plugin, because the uninstall scripts ship inside it. Then
+`/plugin uninstall wsl-browser-bridge@tirandagan`. Removing the plugin alone
+leaves the Route 1 setting and the Route 2 helpers in place.
 
 `.wslconfig` and the Windows automation profile are left alone on purpose.
 
 ## Layout
 
 ```
-claude-chrome-wsl-fix/
+claude-chrome-wsl-fix/              the plugin root
+├── .claude-plugin/                plugin.json (plugin wsl-browser-bridge), marketplace.json, listing icon
 ├── SETUP.md                       guided install, written for Claude to follow
 ├── SKILL.md                       skill: claude-chrome-wsl-fix (setup, diagnosis, repair)
 ├── skills/windows-chrome/SKILL.md skill: windows-chrome (day-to-day Route 2 use)
@@ -156,14 +226,14 @@ claude-chrome-wsl-fix/
 │   ├── claude-chrome-wrapper.sh   the Route 1 shim
 │   ├── install-windows-chrome.sh  Route 2 install / --dry-run / --set-mirrored / --uninstall
 │   ├── windows-chrome/            launch-windows-chrome.sh, cdp, cdp.mjs (installed to ~/.claude/bin)
-│   ├── install-skills.sh          link the skills into ~/.claude/skills
+│   ├── install-skills.sh          link a clone into ~/.claude/skills so the plugin loads
 │   ├── show-welcome.sh            open the welcome page when setup is done
 │   └── lib.sh                     shared helpers
 ├── references/
 │   ├── root-cause.md              forensics + how to re-verify after updates
 │   ├── windows-chrome-cdp.md      Route 2 internals and security
 │   └── troubleshooting.md         symptom → fix, both routes
-├── assets/welcome.html            the welcome page, plus welcome.webm and welcome-poster.jpg (its film)
+├── assets/                        README graphics, and the welcome page with its short film
 ├── tests/run.sh                   offline test suite (CI runs it)
 └── CHANGELOG.md
 ```
@@ -172,6 +242,7 @@ claude-chrome-wsl-fix/
 
 Claude Code VS Code extension **2.1.278**, **2.1.280** and **2.1.314**; Chrome 155
 on Windows and 156 in WSL; WSL2 (Debian) on Windows with mirrored networking.
+Plugin loading checked with Claude Code **2.1.316**.
 `references/root-cause.md` has the commands to re-confirm on a newer build.
 Worth running if the fix ever stops working.
 
@@ -179,57 +250,18 @@ Worth running if the fix ever stops working.
 
 ![Built by Tiran Dagan, co-founder of BePrepared Solutions](assets/built-by.svg)
 
-## Who made this, and why it exists
+## Who made this
 
-This skill is a by-product. It exists because I hit the bug myself, spent a day
-inside a minified extension bundle working out that the browser was never the
-problem, and decided nobody else should have to.
+This plugin is a by-product. I hit the bug myself, spent a day inside a minified
+extension bundle working out that the browser was never the problem, and decided
+nobody else should have to.
 
 I'm **[Tiran Dagan](https://bepreparedsolutions.co)**, co-founder of
-**[BePrepared Solutions](https://bepreparedsolutions.co)**. I've advised
-executives and boards at global firms across media, telecom, healthcare and
-tech, and I teach graduate students how to build with AI. These days I spend
-most of my time building — which is how a WSL argument-forwarding bug ended up
-costing me an afternoon.
-
-### What BePrepared is
-
-> The world's most comprehensive preparedness ecosystem. Monitoring, planning,
-> supplies, and expert consulting, all built around your household's specific
-> situation.
-
-Most preparedness advice is a 400-page PDF and a shopping list that assumes your
-life looks like someone else's. We built the opposite: a system that starts from
-*your* address, *your* household, *your* actual risks, and tells you what to do
-next.
-
-Four products, one plan:
-
-| | |
-|---|---|
-| **BeAware** | Live monitoring for your address — FEMA IPAWS alerts, utility outages, local emergencies. *So you never find out last.* |
-| **BeReady** | An AI-generated preparedness plan: risk assessment, evacuation routes, day-by-day timeline, the skills you'd actually need. |
-| **BeEquipped** | Curated kits matched to your plan, not to a generic checklist. |
-| **BeAdvised** | Time with real experts — founders and consultants who've done this for a living. |
-
-### Why a developer might find it interesting
-
-If you build things, the engineering is the part worth a look. BeAware ingests
-the **FEMA IPAWS** alert feeds, resolves **which utility actually serves a given
-street address** against thousands of service-territory polygons in PostGIS, and
-discovers the JSON endpoints behind utility outage maps so it can normalise wildly
-inconsistent data into one schema. The planning side runs an AI pipeline that
-scales supply quantities by household composition and time horizon, and generates
-evacuation routing that changes depending on whether you'd be on foot or in a car.
-
-It's a genuinely hard data problem wearing a calm consumer interface.
-
-**→ [bepreparedsolutions.co](https://bepreparedsolutions.co)**
-
-### If this skill saved you an afternoon
-
-Take a look at what else I'm building — or just send this skill to the next
-person who says "Claude in Chrome isn't working and I've reinstalled it twice."
+**[BePrepared Solutions](https://bepreparedsolutions.co)**, where we build
+household preparedness tools: live alerts for your address, an AI-generated
+plan, matched supplies, and time with experts. If this saved you an afternoon,
+send it to the next person who says "Claude in Chrome isn't working and I've
+reinstalled it twice."
 
 ---
 

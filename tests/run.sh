@@ -78,16 +78,30 @@ echo "install-skills.sh"
 H="$(newhome)"
 HOME="$H" "$S/install-skills.sh" --dry-run >/dev/null; [ -z "$(ls -A "$H/.claude/skills" 2>/dev/null)" ] && pass "dry run links nothing" || fail "dry run links nothing"
 HOME="$H" "$S/install-skills.sh" >/dev/null; RC=$?
-eq "links both skills" "$RC.$([ -L "$H/.claude/skills/claude-chrome-wsl-fix" ] && echo y).$([ -f "$H/.claude/skills/windows-chrome/SKILL.md" ] && echo y)" "0.y.y"
+eq "links the plugin once (windows-chrome comes with it)" "$RC.$([ -L "$H/.claude/skills/claude-chrome-wsl-fix" ] && echo y).$([ -f "$H/.claude/skills/claude-chrome-wsl-fix/skills/windows-chrome/SKILL.md" ] && echo y).$([ -e "$H/.claude/skills/windows-chrome" ] || echo n)" "0.y.y.n"
 has "re-run is idempotent" "$(HOME="$H" "$S/install-skills.sh")" "already in place"
 HOME="$H" "$S/install-skills.sh" --uninstall >/dev/null
-[ ! -e "$H/.claude/skills/windows-chrome" ] && pass "uninstall removes links" || fail "uninstall removes links"
-mkdir -p "$H/.claude/skills/windows-chrome"; echo old > "$H/.claude/skills/windows-chrome/SKILL.md"
-HOME="$H" "$S/install-skills.sh" >/dev/null 2>&1; eq "existing folder → exit 2, untouched" "$?.$(cat "$H/.claude/skills/windows-chrome/SKILL.md")" "2.old"
+[ ! -e "$H/.claude/skills/claude-chrome-wsl-fix" ] && pass "uninstall removes the link" || fail "uninstall removes the link"
+ln -s "$ROOT/skills/windows-chrome" "$H/.claude/skills/windows-chrome"
+HOME="$H" "$S/install-skills.sh" >/dev/null
+[ ! -e "$H/.claude/skills/windows-chrome" ] && pass "removes the pre-2.2 windows-chrome link" || fail "removes the pre-2.2 windows-chrome link"
 HOME="$H" "$S/install-skills.sh" --uninstall >/dev/null
-eq "uninstall leaves foreign folder alone" "$(cat "$H/.claude/skills/windows-chrome/SKILL.md")" "old"
+mkdir -p "$H/.claude/skills/windows-chrome"; echo mine > "$H/.claude/skills/windows-chrome/SKILL.md"
+HOME="$H" "$S/install-skills.sh" >/dev/null; HOME="$H" "$S/install-skills.sh" --uninstall >/dev/null
+eq "leaves a windows-chrome folder it didn't make alone" "$(cat "$H/.claude/skills/windows-chrome/SKILL.md")" "mine"
+mkdir -p "$H/.claude/skills/claude-chrome-wsl-fix"; echo old > "$H/.claude/skills/claude-chrome-wsl-fix/SKILL.md"
+HOME="$H" "$S/install-skills.sh" >/dev/null 2>&1; eq "existing folder → exit 2, untouched" "$?.$(cat "$H/.claude/skills/claude-chrome-wsl-fix/SKILL.md")" "2.old"
+HOME="$H" "$S/install-skills.sh" --uninstall >/dev/null
+eq "uninstall leaves foreign folder alone" "$(cat "$H/.claude/skills/claude-chrome-wsl-fix/SKILL.md")" "old"
 HOME="$H" "$S/install-skills.sh" --replace >/dev/null; RC=$?
-eq "--replace links and backs up outside skills/" "$RC.$([ -L "$H/.claude/skills/windows-chrome" ] && echo y).$(find "$H/.claude/skill-backups" -maxdepth 1 -name "windows-chrome-*" | wc -l | tr -d " ")" "0.y.1"
+eq "--replace links and backs up outside skills/" "$RC.$([ -L "$H/.claude/skills/claude-chrome-wsl-fix" ] && echo y).$(find "$H/.claude/skill-backups" -maxdepth 1 -name "claude-chrome-wsl-fix-*" | wc -l | tr -d " ")" "0.y.1"
+mini_copy() { mkdir -p "$1/scripts" "$1/.claude-plugin"; cp "$ROOT/SKILL.md" "$1/"; cp "$ROOT/.claude-plugin/plugin.json" "$1/.claude-plugin/"; cp "$S/install-skills.sh" "$S/lib.sh" "$1/scripts/"; }
+H="$(newhome)"; P="$H/.claude/plugins/cache/tirandagan/wsl-browser-bridge/2.2.0"; mini_copy "$P"
+OUT="$(HOME="$H" "$P/scripts/install-skills.sh")"; RC=$?
+eq "marketplace install → links nothing" "$RC.$(ls -A "$H/.claude/skills" 2>/dev/null | wc -l | tr -d ' ')" "0.0"
+has "marketplace install → says why" "$OUT" "installed as a plugin"
+H="$(newhome)"; P="$H/.claude/skills/claude-chrome-wsl-fix"; mini_copy "$P"
+has "clone inside ~/.claude/skills → loads in place" "$(HOME="$H" "$P/scripts/install-skills.sh")" "load from there"
 
 echo "wslconfig-mirror.py"
 M="$S/wslconfig-mirror.py"; f="$TMP/wslconfig"
@@ -199,6 +213,20 @@ for f in SKILL.md skills/windows-chrome/SKILL.md; do
     && pass "$f frontmatter" || fail "$f frontmatter"
 done
 eq "skill folder name matches name:" "$(sed -n 's/^name: //p' "$ROOT/skills/windows-chrome/SKILL.md")" "windows-chrome"
+MANIFEST="$(cd "$ROOT" && python3 - <<'PY'
+import json, re, os
+p = json.load(open(".claude-plugin/plugin.json")); m = json.load(open(".claude-plugin/marketplace.json"))
+top = re.search(r"^## (\S+)", open("CHANGELOG.md").read(), re.M).group(1)
+errs = []
+if p["name"] != "wsl-browser-bridge": errs.append("plugin name changed: " + p["name"])
+if p["name"].startswith(("claude-", "anthropic-")): errs.append("reserved name prefix")
+if p["version"] != top: errs.append(f"plugin.json version {p['version']} != CHANGELOG {top}")
+if [e["name"] for e in m["plugins"]] != [p["name"]]: errs.append("marketplace entry name != plugin name")
+if not os.path.isfile(p["icon"]): errs.append("icon missing: " + p["icon"])
+print("\n".join(errs))
+PY
+)"
+[ -z "$MANIFEST" ] && pass "plugin manifest: name, version = CHANGELOG, marketplace entry, icon" || fail "plugin manifest" "$MANIFEST"
 BROKEN="$(cd "$ROOT" && python3 - <<'PY'
 import re, os, glob
 bad = []

@@ -5,9 +5,10 @@ description: Sets up, diagnoses and repairs browser control for Claude Code on W
 
 # Browser control for Claude Code on Windows + WSL
 
-Paths below are relative to this skill's folder (the repo root). `SETUP.md` is the
-full guided install, written for you to follow. Use it for a first-time setup.
-This file is the short map for diagnosis, repair, resume and undo.
+Paths below are relative to this skill's folder (the repo root, which is also the
+root of the `wsl-browser-bridge` plugin). `SETUP.md` is the full guided install,
+written for you to follow. Use it for a first-time setup. This file is the short
+map for diagnosis, repair, resume and undo.
 
 ## Two routes, and how to choose
 
@@ -70,10 +71,21 @@ Terminal users (no VS Code) need no wrapper: `claude --chrome`.
    `wsl --shutdown` from Windows PowerShell. Never run it yourself: it kills this session.
 3. Day-to-day use is the `windows-chrome` skill.
 
-## Skills and resume
+## Plugin, skills and resume
 
-`scripts/install-skills.sh` links this skill and `skills/windows-chrome` into
-`~/.claude/skills` (`--replace` moves a conflicting folder to `~/.claude/skill-backups/`).
+The repo is the `wsl-browser-bridge` plugin: this skill plus `skills/windows-chrome`.
+How it got onto the machine decides whether anything needs linking:
+
+- **From a marketplace or Anthropic's directory** (this folder is under
+  `~/.claude/plugins/`): both skills already load. Don't run `install-skills.sh` or
+  clone the repo into `~/.claude/skills` as well: a second copy loads this skill twice.
+- **A clone in `~/.claude/skills/`**: loads in place as the plugin. Nothing to link.
+- **A clone anywhere else**: `scripts/install-skills.sh` links it in as
+  `~/.claude/skills/claude-chrome-wsl-fix` (`--replace` moves a conflicting folder
+  to `~/.claude/skill-backups/`).
+
+In every case `install-skills.sh` also removes the pre-2.2 `~/.claude/skills/windows-chrome`
+link, which would otherwise load `windows-chrome` twice. It's safe to run whenever unsure.
 
 Installers record progress in `~/.config/claude-chrome-wsl-fix/state.env`
 (`ROUTE1=`, `ROUTE2=`, `PENDING=reload|wsl-restart|none`). When asked to continue
@@ -100,8 +112,12 @@ in a new tab of whichever Chrome is set up.
 ```bash
 scripts/install.sh --uninstall                # Route 1 (then reload the window)
 scripts/install-windows-chrome.sh --uninstall # Route 2 (.wslconfig and the profile are left alone)
-scripts/install-skills.sh --uninstall         # skill links
+scripts/install-skills.sh --uninstall         # the ~/.claude/skills link, if it made one
 ```
+
+If the user also wants the plugin gone, run the uninstalls above **first**, because the
+scripts live inside the plugin. Then they run `/plugin uninstall wsl-browser-bridge@tirandagan`
+(or remove it where they added it: claude.ai, or the clone in `~/.claude/skills`).
 
 ## Deeper reading
 
